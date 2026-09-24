@@ -262,9 +262,42 @@ def main():
             raise ValueError(f"{where}: 未知 action")
     deck.sync()
     prs.save(args.out)
+
+    # 处置回执（receipt）：逐页去向，validate_output 用它与计划精确对账。
+    # buckets: untouched=未涉及 | updated=被 replace/import 改过 |
+    #          cloned=克隆新增 | deleted=已删除
+    base_n = deck.next_clone
+    updated, deleted = set(), set()
+    for op in plan["operations"]:
+        act = op["action"]
+        if act in ("replace_text", "import_image") and isinstance(op["slide"], int):
+            updated.add(op["slide"])
+        elif act == "delete_slide":
+            deleted.add(op["slide"])
+    untouched = [i for i in range(base_n) if i not in updated and i not in deleted]
+    pages = []
+    for pos, ident in enumerate(deck.order):
+        if ident in deck.clones:
+            pages.append({"position": pos, "disposition": "cloned",
+                          "clone_id": ident, "clone_from": deck.clones[ident]})
+        elif ident in updated:
+            pages.append({"position": pos, "disposition": "updated", "base_slide": ident})
+        else:
+            pages.append({"position": pos, "disposition": "untouched", "base_slide": ident})
+    receipt = {"receipt_version": "1", "output": os.path.basename(args.out),
+               "base_slide_count": base_n, "final_slide_count": len(deck.order),
+               "buckets": {"untouched": untouched, "updated": sorted(updated),
+                           "cloned": sorted(deck.clones), "deleted": sorted(deleted)},
+               "pages": pages}
+    stem = args.out[:-5] if args.out.endswith(".pptx") else args.out
+    receipt_path = stem + ".receipt.json"
+    with open(receipt_path, "w", encoding="utf-8") as f:
+        json.dump(receipt, f, ensure_ascii=False, indent=1)
     print(f"OK {done}/{len(plan['operations'])} ops -> {args.out} "
           f"(slides: {len(deck.order)}, clones: {len(deck.clones)}, "
           f"skipped: {len(plan.get('skipped', []))}, conflicts: {len(plan.get('conflicts', []))})")
+    print(f"receipt: untouched={len(untouched)} updated={len(updated)} "
+          f"cloned={len(deck.clones)} deleted={len(deleted)} -> {receipt_path}")
 
 
 if __name__ == "__main__":

@@ -20,7 +20,9 @@
       "shape_id": 5,                 // 可选；不给则按 old_text 全页匹配（易误伤，慎用）
       "match": "full",               // full=整框替换 | para=逐段匹配替换，默认 full
       "old_text": "市场规模 1.2 亿元",   // 抄 inspect 清单 text 字段（含换行）
-      "new_text": "市场规模 1.35 亿元"
+      "new_text": "市场规模 1.35 亿元",
+      "source": "material_a.pptx#1"  // 可选但强烈建议：内容出处（溯源用，
+                                     // 无可靠来源的内容不该进计划）
     },
 
     // ── 2. 克隆基准页并替换文本后插入（append 类动作）──
@@ -68,3 +70,10 @@
 3. `insert_slide` 可连续多条；`after` 都写基准原始页号。
 4. `import_image` 换图不换框：目标形状的位置/尺寸/裁剪保持基准原样。
 5. 计划要可重放：merge_apply 每次都从基准原件冷启动执行全量 operations。
+
+## 处置回执（receipt）
+
+merge_apply 执行成功后，会在输出文件旁写 `<out>.receipt.json`：逐页去向
+（buckets: untouched / updated / cloned / deleted + 逐页 disposition 明细）。
+`validate_output.py` 会自动探测该文件并与计划推导的期望分桶**精确对账**——
+"未涉及的页保持原样"由此从承诺变为可验证的事实。回执是工具产物，不要手改。

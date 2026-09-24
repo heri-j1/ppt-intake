@@ -6,13 +6,14 @@
 ## 前置
 
 ```bash
+SKILL_DIR="$(pwd)/skills/ppt-intake"    # 路径先于命令：后续一律用 ${SKILL_DIR}
 python samples/make_samples.py          # 生成 base.pptx + material_a.pptx（格式刻意冲突）
 ```
 
 ## T1 · 盘点脚本
 
 ```bash
-python skills/ppt-intake/scripts/inspect_pptx.py samples/base.pptx -o work/t1.json
+python "${SKILL_DIR}/scripts/inspect_pptx.py" samples/base.pptx -o work/t1.json
 ```
 
 预期：`OK ... 8 slides`；JSON 里 8 页、theme.colors 有 accent1、
@@ -22,20 +23,21 @@ python skills/ppt-intake/scripts/inspect_pptx.py samples/base.pptx -o work/t1.js
 ## T2 · 执行合并（含克隆/替换/图片导入）
 
 ```bash
-python skills/ppt-intake/scripts/merge_apply.py samples/base.pptx work/merge_plan.json -o work/t2.pptx -m samples
+python "${SKILL_DIR}/scripts/merge_apply.py" samples/base.pptx work/merge_plan.json -o work/t2.pptx -m samples
 ```
 
-预期：`OK 6/6 ops`，无 WARN；11 slides, clones: 3。
+预期：`OK 6/6 ops`，无 WARN；11 slides, clones: 3；随后打印
+`receipt: untouched=6 updated=2 cloned=3 deleted=0 -> work/t2.receipt.json`（untouched=6：页0/1/2/5/6/7；页6虽是克隆源但自身未被改）。
 若报 WARN「未找到匹配」→ old_text 没抄 inspect 清单，或克隆源被先改过
 （脚本已用预克隆规避后者，只剩抄写问题）。
 
 ## T3 · 验证
 
 ```bash
-python skills/ppt-intake/scripts/validate_output.py work/t2.pptx --base samples/base.pptx --plan work/merge_plan.json
+python "${SKILL_DIR}/scripts/validate_output.py" work/t2.pptx --base samples/base.pptx --plan work/merge_plan.json -m samples
 ```
 
-预期：8 项 PASS，`RESULT: ALL GREEN`，退出码 0。
+预期：10 项 PASS（含 receipt 对账 / pages / landed），`RESULT: ALL GREEN`，退出码 0。
 
 ## T4 · agent 抽查（人工/AI 检查）
 
@@ -49,11 +51,11 @@ python skills/ppt-intake/scripts/validate_output.py work/t2.pptx --base samples/
 
 ```bash
 echo '{"version":"1","operations":[{"action":"delete_slide","slide":1}],"skipped":[],"conflicts":[]}' > work/t5.json
-python skills/ppt-intake/scripts/merge_apply.py samples/base.pptx work/t5.json -o work/t5.pptx
-python skills/ppt-intake/scripts/validate_output.py work/t5.pptx --base samples/base.pptx --plan work/t5.json
+python "${SKILL_DIR}/scripts/merge_apply.py" samples/base.pptx work/t5.json -o work/t5.pptx
+python "${SKILL_DIR}/scripts/validate_output.py" work/t5.pptx --base samples/base.pptx --plan work/t5.json
 ```
 
-预期：7 slides，ALL GREEN。
+预期：7 slides，`receipt: ... deleted=1`，ALL GREEN（含 pages.deleted 检查）。
 
 ## T6 · 输入保护
 
@@ -62,7 +64,7 @@ T2/T5 跑完后核对 `samples/base.pptx` 与 `samples/material_a.pptx` 的修�
 
 ## 最近一次结果
 
-- 日期：2026-09-24
-- T1–T6 全部通过；产物 `samples/base_merged.pptx` + `samples/变更说明.md`
+- 日期：2026-09-25（v2：回执对账 / landed / source 溯源 / SKILL_DIR 升级后重跑）
+- T1–T6 全部通过；产物 `samples/base_merged.pptx` + `samples/变更说明.md` + 回执
 - 冒烟中发现并已修复：克隆源被先前 replace_text 污染（→ 预克隆）、
   validate 相对路径误报（→ 按 plan/out 目录解析）

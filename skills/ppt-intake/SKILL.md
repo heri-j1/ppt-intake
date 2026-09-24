@@ -10,6 +10,14 @@ license: MIT
 产出一版**格式与基准完全一致**的成品。核心思想：**基准 PPT 的每一页都是模板**——
 新页 = 克隆基准同角色页 + 替换文本；绝不新建页面，绝不直接搬运材料页。
 
+## 硬规则 —— 路径先于命令
+
+读取本文件时，把宿主提供的本 skill 目录绝对路径记为 `SKILL_DIR`。
+之后每次调用脚本都展开 `${SKILL_DIR}`（如
+`python "${SKILL_DIR}/scripts/inspect_pptx.py"`）。
+**绝不 `cd`、绝不假设当前工作目录、绝不猜测安装位置**；宿主没给路径就先问。
+Windows 上若 `python3` 不可用，用 `python` 重跑同一命令。
+
 ## Always Read（每次任务开始前必读）
 
 1. `rules/baseline-rules.md` —— 铁律（违反任何一条 = 返工）：基准格式优先、
@@ -25,17 +33,17 @@ license: MIT
 | 需要克隆页 / 修 rels / 主题色 | `references/pptx-internals.md` | — |
 | 脚本报错 / 结果损坏 / 排错 | `references/gotchas.md` | — |
 
-## 脚本（确定性工作交给脚本，判断性工作由你做）
+## 脚本（确定性工作交给脚本，判断性工作由你做；路径一律用 ${SKILL_DIR}）
 
 ```bash
 # 1. 盘点：PPT → 结构 JSON 清单（含每页角色、文本预算、主题色/字体）
-python scripts/inspect_pptx.py <file.pptx> -o <out.json>
+python "${SKILL_DIR}/scripts/inspect_pptx.py" <file.pptx> -o <out.json>
 
-# 2. 执行合并计划（在基准副本上操作）
-python scripts/merge_apply.py <base.pptx> <merge_plan.json> -o <out.pptx>
+# 2. 执行合并计划（在基准副本上操作；成功后写 <out>.receipt.json 逐页处置回执）
+python "${SKILL_DIR}/scripts/merge_apply.py" <base.pptx> <merge_plan.json> -o <out.pptx> -m <材料目录>
 
-# 3. 验证输出（必须全绿才算完成）
-python scripts/validate_output.py <out.pptx> --base <base.pptx> --plan <merge_plan.json>
+# 3. 验证输出（必须全绿才算完成；自动探测回执并与计划对账）
+python "${SKILL_DIR}/scripts/validate_output.py" <out.pptx> --base <base.pptx> --plan <merge_plan.json>
 ```
 
 依赖：仅 `python-pptx`（`pip install python-pptx`）。
@@ -51,5 +59,6 @@ python scripts/validate_output.py <out.pptx> --base <base.pptx> --plan <merge_pl
 
 ## 完成标准
 
-`validate_output.py` 全部通过 + 抽查 3 页（1 克隆页 + 1 替换页 + 1 原样页）确认
-格式与基准一致 + 向用户报告：改了什么、丢了什么（附理由）、有什么冲突。
+`validate_output.py` 全部通过（含 receipt 对账与替换落地检查）+ 抽查 3 页
+（1 克隆页 + 1 替换页 + 1 原样页）确认格式与基准一致 + 向用户报告：
+改了什么（附来源）、丢了什么（附理由）、有什么冲突。

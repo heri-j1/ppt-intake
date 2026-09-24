@@ -1,0 +1,86 @@
+{
+ "receipt_version": "1",
+ "output": "base_merged.pptx",
+ "base_slide_count": 8,
+ "final_slide_count": 11,
+ "buckets": {
+  "untouched": [
+   0,
+   1,
+   2,
+   5,
+   6,
+   7
+  ],
+  "updated": [
+   3,
+   4
+  ],
+  "cloned": [
+   "p_chan",
+   "p_comp",
+   "p_risk"
+  ],
+  "deleted": []
+ },
+ "pages": [
+  {
+   "position": 0,
+   "disposition": "untouched",
+   "base_slide": 0
+  },
+  {
+   "position": 1,
+   "disposition": "untouched",
+   "base_slide": 1
+  },
+  {
+   "position": 2,
+   "disposition": "untouched",
+   "base_slide": 2
+  },
+  {
+   "position": 3,
+   "disposition": "updated",
+   "base_slide": 3
+  },
+  {
+   "position": 4,
+   "disposition": "updated",
+   "base_slide": 4
+  },
+  {
+   "position": 5,
+   "disposition": "untouched",
+   "base_slide": 5
+  },
+  {
+   "position": 6,
+   "disposition": "untouched",
+   "base_slide": 6
+  },
+  {
+   "position": 7,
+   "disposition": "cloned",
+   "clone_id": "p_chan",
+   "clone_from": 6
+  },
+  {
+   "position": 8,
+   "disposition": "cloned",
+   "clone_id": "p_comp",
+   "clone_from": 6
+  },
+  {
+   "position": 9,
+   "disposition": "cloned",
+   "clone_id": "p_risk",
+   "clone_from": 6
+  },
+  {
+   "position": 10,
+   "disposition": "untouched",
+   "base_slide": 7
+  }
+ ]
+}

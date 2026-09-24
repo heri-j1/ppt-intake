@@ -48,13 +48,18 @@ pip install python-pptx        # 唯一依赖
 - 「把这个材料 PPT 的内容整合进我的 base.pptx，格式以我的为准」
 - 「对比一下这两份 PPT 的结构差异」（只读模式，不改文件）
 
-手动跑脚本：
+手动跑脚本（仓库内相对路径；agent 场景请遵循 SKILL.md 的 `${SKILL_DIR}` 硬规则，
+用 skill 目录的绝对路径调用）：
 
 ```bash
 python skills/ppt-intake/scripts/inspect_pptx.py    <file.pptx> -o out.json   # 盘点
 python skills/ppt-intake/scripts/merge_apply.py     base.pptx plan.json -o out.pptx [-m 材料目录]
 python skills/ppt-intake/scripts/validate_output.py out.pptx --base base.pptx --plan plan.json
 ```
+
+merge_apply 成功后会在输出旁写 `<out>.receipt.json` **逐页处置回执**
+（untouched / updated / cloned / deleted），validate 自动探测并与计划精确对账，
+让「未涉及的页保持原样」可验证。
 
 ## Demo（自带样例，可复现）
 

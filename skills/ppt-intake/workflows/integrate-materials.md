@@ -39,6 +39,9 @@ merge_plan.json。非交互（批处理/已授权全自动）时跳过本步，�
 - conflict → 不产生操作，记入 `conflicts`
 - 材料图片确需保留 → `import_image`（从严使用，R6）
 
+每条 op 建议带 `source` 字段标注内容出处（如 `"material_a.pptx#1"`）——
+无可靠来源的内容不该进计划（事实溯源）。
+
 写完自查三件事：
 1. 每个 `new_text` 长度 ≤ 对应框 `budget`（清单字段）
 2. 每个 `replacements` 的 `old_text` 与克隆源页的 exact text 一致（含换行）
@@ -47,20 +50,22 @@ merge_plan.json。非交互（批处理/已授权全自动）时跳过本步，�
 ## Step 4 · 执行（脚本）
 
 ```bash
-python scripts/merge_apply.py base.pptx work/merge_plan.json -o base_merged.pptx
+python "${SKILL_DIR}/scripts/merge_apply.py" base.pptx work/merge_plan.json -o base_merged.pptx -m <材料目录>
 ```
 
 脚本在副本上执行：克隆（XML 级 + 修 rels）→ 替换（首 run 保格式）→
-插页 → 删页（高索引先）→ 图片导入。任何一步失败会报出操作序号和原因，
-修计划后重跑（脚本是幂等重放：每次都从基准原件重新开始）。
+插页 → 删页（高索引先）→ 图片导入；成功后写 `base_merged.receipt.json`
+逐页处置回执（untouched/updated/cloned/deleted）。任何一步失败会报出
+操作序号和原因，修计划后重跑（脚本是幂等重放：每次都从基准原件重新开始）。
 
 ## Step 5 · 验证与交付（脚本 + 你）
 
 ```bash
-python scripts/validate_output.py base_merged.pptx --base base.pptx --plan work/merge_plan.json
+python "${SKILL_DIR}/scripts/validate_output.py" base_merged.pptx --base base.pptx --plan work/merge_plan.json
 ```
 
-全绿后抽查 3 页（1 克隆页 + 1 替换页 + 1 原样页）对照基准确认格式一致，
+全绿的标志：receipt 与计划分桶对账通过、每条替换落地、untouched 页逐字未动。
+之后抽查 3 页（1 克隆页 + 1 替换页 + 1 原样页）对照基准确认格式一致，
 最后写 `变更说明.md`：
 
 ```markdown
@@ -77,7 +82,8 @@ python scripts/validate_output.py base_merged.pptx --base base.pptx --plan work/
 
 ## 失败回路
 
-- apply/validate 报错 → 读 `references/gotchas.md` 对症 → 修**计划**或调用方式，
+- apply/validate 报错 → 读 `references/gotchas.md`，按**修复层级原则**在拥有
+  故障的最浅层修（单页问题改那条 op；结构取舍改计划整体；调用问题改命令），
   不要手改输出文件（下次 apply 会覆盖）。
 - 克隆页观感不对（如字号突兀）→ 大概率替换进了错误角色的框，
   对照清单的 shape_id 重写 replacements。
