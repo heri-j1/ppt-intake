@@ -1,23 +1,26 @@
-# ppt-intake — PPT 材料整合 Skill（跨 Agent 通用）
+# ppt-intake — PPT 材料整合 Skill
 
 把**别人的 PPT 材料**（格式/模板/字体与你的不一致）**摄入**你自己的基准 PPT，
 产出一版格式与基准完全一致的成品。核心思想：**基准 PPT 的每一页都是模板**——
 新页 = 克隆基准同角色页 + 替换文本；绝不从零建页，绝不搬运材料页。
 
-标准 **Agent Skill** 格式（SKILL.md + YAML frontmatter），可在任何支持
-Agent Skills 规范的 agent 中使用：ZCode、Claude Code 等。
+标准 **Agent Skill** 格式（SKILL.md + YAML frontmatter），支持 Agent Skills
+规范的 agent（ZCode、Claude Code 等）即可使用。
 
-## 安装到其他 Agent
-
-唯一真源在 `skills/ppt-intake/`，安装 = 把这个文件夹放进目标 agent 的 skill 目录。
-本仓库自带安装器（Git Bash / Linux / macOS）：
+## 快速开始
 
 ```bash
-./install.sh                # 列出全部目标
-./install.sh all            # 装到所有已知位置
-./install.sh claude-user    # 只装 Claude Code（用户级，全项目生效）
-./install.sh zcode-user agents-user
+git clone https://github.com/heri-j1/ppt-intake && cd ppt-intake
+pip install python-pptx        # 唯一依赖
+./install.sh claude-user       # 装到 Claude Code（其他目标见下表）
 ```
+
+然后对 agent 说一句话：
+
+- 「把这个材料 PPT 的内容整合进我的 base.pptx，格式以我的为准」
+- 「对比一下这两份 PPT 的结构差异」（只读模式，不改文件）
+
+### 安装目标
 
 | 目标 | 落点 | 生效范围 |
 |---|---|---|
@@ -27,29 +30,16 @@ Agent Skills 规范的 agent 中使用：ZCode、Claude Code 等。
 | `zcode-project` | `<本项目>/.zcode/skills/ppt-intake` | ZCode 当前项目 |
 | `agents-user` / `agents-project` | `.agents/skills/` | 通用 AGENTS 生态（ZCode 亦识别） |
 
+`./install.sh` 不带参数列出全部目标，`all` 一次全装。
 不用安装器时，手动复制等价：`cp -R skills/ppt-intake ~/.claude/skills/`。
-
-**目标 agent 不支持 skill 自动发现？** skill 本体就是「Markdown 指令 + Python 脚本」，
-可直接降级使用：对 agent 说
-「读取 `<路径>/skills/ppt-intake/SKILL.md` 并严格按其执行」，
-SKILL.md 的路由会引导它加载 rules/workflows/scripts。
 
 > 本工作区内 `.zcode/skills/ppt-intake` 是指向真源的 NTFS junction（开发时免双份维护），
 > 安装器检测到链接会自动跳过，不会误删。
 
-## 依赖
+## 手动跑脚本
 
-```bash
-pip install python-pptx        # 唯一依赖
-```
-
-## 用法（装好后对 agent 直接说）
-
-- 「把这个材料 PPT 的内容整合进我的 base.pptx，格式以我的为准」
-- 「对比一下这两份 PPT 的结构差异」（只读模式，不改文件）
-
-手动跑脚本（仓库内相对路径；agent 场景请遵循 SKILL.md 的 `${SKILL_DIR}` 硬规则，
-用 skill 目录的绝对路径调用）：
+仓库内可用相对路径；agent 场景请遵循 SKILL.md 的 `${SKILL_DIR}` 硬规则，
+用 skill 目录的绝对路径调用：
 
 ```bash
 python skills/ppt-intake/scripts/inspect_pptx.py    <file.pptx> -o out.json   # 盘点
@@ -68,8 +58,9 @@ python samples/make_samples.py     # 生成格式冲突样例（16:9蓝 vs 4:3�
 # 按 tests/smoke-test.md 的 T1–T6 执行
 ```
 
-已验证产物：`samples/base_merged.pptx`（11 页）+ `samples/变更说明.md`，
-验证 8/8 全绿：克隆页字体继承基准（微软雅黑），材料宋体零泄漏，
+已验证产物：`samples/base_merged.pptx`（11 页）+ `samples/base_merged.receipt.json`
+（处置回执）+ `samples/变更说明.md`，验证 10 项全绿（含回执对账与替换落地检查）：
+克隆页字体继承基准（微软雅黑），材料宋体零泄漏，
 冲突数据（竞品 A 售价 99 vs 89 元）按规则留待用户裁决。
 
 ## 结构
@@ -82,7 +73,7 @@ skills/ppt-intake/            # skill 本体（唯一真源，安装即复制它
 ├── references/               # pptx 内部结构 / 坑集
 ├── scripts/                  # inspect / merge_apply / validate
 └── templates/merge_plan.md   # 合并计划 JSON schema
-install.sh                    # 跨 agent 安装器
+install.sh                    # 安装器
 samples/                      # 端到端样例 + 已验证产物
 tests/smoke-test.md           # 全链路冒烟
 .zcode/                       # ZCode 工作区配置（plans 存档 + 指向 skill 的 junction）
