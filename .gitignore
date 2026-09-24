@@ -1,0 +1,9 @@
+# ZCode 工作区配置：本机 junction + 会话计划，不进仓库（分发用 install.sh 重建）
+.zcode/
+
+# 本地临时分析产物
+work/
+
+# Python
+__pycache__/
+*.pyc
